@@ -1,0 +1,10 @@
+---
+
+- name: Require the rolenames variable
+  when: rolenames is not defined
+  fail: msg="bigsudo.dependencies require the rolenames list variable"
+
+- name: Install dependency role if necessary
+  when: ansible_facts.ansible_local[rolenames]|default(false)
+  include: install.yml
+  loop: rolenames

@@ -1,0 +1,13 @@
+galaxy_info:
+  author: jpic
+  description: Ansible role to inject dependencies OAOO (once and only once).
+  company: YourLabs
+  issue_tracker_url: https://yourlabs.io/bigsudo/dependencies
+  license: BSD
+  min_ansible_version: 2.4
+  platforms:
+  - name: GenericLinux
+    versions:
+    - all
+  galaxy_tags: [meta]
+dependencies: []

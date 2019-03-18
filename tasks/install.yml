@@ -1,0 +1,13 @@
+---
+- include_role: name={{ name }}
+- file: path=/etc/ansible/facts.d state=directory
+- set_fact: '{{ name }}="installed"'
+- shell:
+    cmd: |
+      cat > /etc/ansible/facts.d/{{ name }}.fact << EOF
+      #!/bin/sh
+      echo '{"{{ name }}" : "installed"}'
+      EOF
+- file: path=/etc/ansible/facts.d/{{ name }}.fact mode=0755
+- meta: flush_handlers
+- setup: filter=ansible_local
