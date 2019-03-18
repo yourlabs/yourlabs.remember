@@ -1,10 +1,9 @@
 galaxy_info:
-  role_name: bigsudo.dependencies
   author: jpic
   owner: jpic
   description: Ansible role to inject dependencies OAOO (once and only once).
   company: YourLabs
-  issue_tracker_url: https://yourlabs.io/bigsudo/dependencies
+  issue_tracker_url: https://yourlabs.io/oss/yourlabs.dependencies
   license: BSD
   min_ansible_version: 2.4
   platforms:
