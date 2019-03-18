@@ -1,13 +1,13 @@
 ---
-- include_role: name={{ name }}
+- include_role: name={{ rolenameclean }}
 - file: path=/etc/ansible/facts.d state=directory
-- set_fact: '{{ name }}="installed"'
+- set_fact: "{{ rolenamesafe }}='installed'"
 - shell:
     cmd: |
-      cat > /etc/ansible/facts.d/{{ name }}.fact << EOF
+      cat > /etc/ansible/facts.d/{{ rolenamesafe }}.fact << EOF
       #!/bin/sh
-      echo '{"{{ name }}" : "installed"}'
+      echo '{"{{ rolenamesafe }}" : "installed"}'
       EOF
-- file: path=/etc/ansible/facts.d/{{ name }}.fact mode=0755
+- file: path=/etc/ansible/facts.d/{{ rolenamesafe }}.fact mode=0755
 - meta: flush_handlers
 - setup: filter=ansible_local
