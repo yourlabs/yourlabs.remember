@@ -1,6 +1,7 @@
 galaxy_info:
   author: jpic
   owner: jpic
+  role_name: roleonce
   description: Ansible role to inject dependencies OAOO (once and only once).
   company: YourLabs
   issue_tracker_url: https://yourlabs.io/oss/yourlabs.roleonce/issues
