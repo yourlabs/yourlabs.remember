@@ -1,0 +1,7 @@
+#!/bin/sh
+echo '{
+    {% for varname in varnames|default([]) -%}
+    "{{ varname }}": "{{ lookup("vars", varname) }}",
+    {% endfor -%}
+    "safe": "installed"
+}'

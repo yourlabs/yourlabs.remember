@@ -18,6 +18,7 @@ class FilterModule(object):
         return self.as_role_name(rolename).replace('.', '_')
 
     def remember(self, facts, rolename, varname, default=None):
+        """Do not use unless the top of your tasks include this role !"""
         factname = self.as_fact_name(rolename)
 
         if factname not in facts['ansible_local']:

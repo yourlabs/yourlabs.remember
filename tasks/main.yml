@@ -7,17 +7,8 @@
   file: path=/etc/ansible/facts.d state=directory
 
 - name: Save facts for further runs
-  shell:
-    cmd: |
-      cat > /etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact << EOF
-      #!/bin/sh
-      echo '{
-        {% for varname in varnames|default([]) -%}
-        "{{ varname }}": "{{ hostvars[inventory_hostname][varname] }}",
-        {%- endfor %}
-        "safe": "installed"
-      }'
-      EOF
-
-- name: Make facts executable for Ansible
-  file: path=/etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact mode=0755
+  template:
+    src: remember.fact
+    dest: /etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact
+    mode: 0700
+    owner: root

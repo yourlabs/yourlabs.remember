@@ -159,16 +159,6 @@ agent-less).
 I recommend trying this out for small projects (pizza team, handful of servers
 with different purpose).
 
-1. c) With a little template filter too !
-`````````````````````````````````````````
-
-``yourlabs.remember`` also provides a template filter that will save you a
-little bit of typing, you could rewrite the above example as::
-
-   url: '{{ ansible_facts|remember("your.parent", "url", "example.com") }}'
-
-It is not mandatory but i prefer this syntax so it's also available to you.
-
 Conclusion
 ==========
 
@@ -183,10 +173,10 @@ Finnaly we're getting to the point where we have a clear and relatively easy way
 Credits
 =======
 
-Thanks *agaffney* from ``#ansible``@``irc.freenode.net``, one of the best IRC
-channels !!
-
 Thanks *totakoko* from ``beta.gouv.fr`` for the long discussions and for
 demonstrating that my inventory was overkill and that it was possible without ;)
 
-And thank you for reading !
+Thanks *agaffney* and *mackerman* from ``#ansible``@``irc.freenode.net``, on
+of the best IRC channels !
+
+And thank *you* for reading my little adventure !
