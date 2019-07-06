@@ -1,7 +1,23 @@
 ---
 
-- name: Install dependency role if necessary
-  include: loop.yml
-  loop: '{{ rolenames|default([]) }}'
-  loop_control:
-    loop_var: rolename
+# Task file to remember variables of a role for a
+# future execution without re-specifying variables.
+
+- name: Ensure facts directory exists
+  file: path=/etc/ansible/facts.d state=directory
+
+- name: Save facts for further runs
+  shell:
+    cmd: |
+      cat > /etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact << EOF
+      #!/bin/sh
+      echo '{
+        {%- for varname in varnames|default([]) %}
+        "{{ varname }}": "{{ hostvars[inventory_hostname][varname] }}"{% if not loop.last %},{% endif %}
+        {% endfor -%}
+        "safe": "installed"
+      }'
+      EOF
+
+- name: Make facts executable for Ansible
+  file: path=/etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact mode=0755

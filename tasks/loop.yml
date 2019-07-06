@@ -1,8 +1,0 @@
----
-
-- set_fact: "rolenameclean='{{ rolename.rstrip('/').split('/')[-1].split(',')[0] }}'"
-
-- set_fact: "rolenamesafe='{{ rolenameclean.replace('.', '_') }}'"
-
-- include: install.yml
-  when: not ansible_facts.ansible_local[rolenamesafe]|default(false)
