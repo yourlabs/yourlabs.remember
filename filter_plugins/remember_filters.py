@@ -11,7 +11,7 @@ class FilterModule(object):
 
     def as_role_name(self, rolename):
         """Makes your.role out of github.com/you/your.role."""
-        return rolename.rstrip('/').split('/')[-1].split(',')[0] }}
+        return rolename.rstrip('/').split('/')[-1].split(',')[0]
 
     def as_fact_name(self, rolename):
         """Replace dots with underscore for same fact name."""
