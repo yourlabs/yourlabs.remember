@@ -12,9 +12,9 @@
       cat > /etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact << EOF
       #!/bin/sh
       echo '{
-        {%- for varname in varnames|default([]) %}
-        "{{ varname }}": "{{ hostvars[inventory_hostname][varname] }}"{% if not loop.last %},{% endif %}
-        {% endfor -%}
+        {% for varname in varnames|default([]) -%}
+        "{{ varname }}": "{{ hostvars[inventory_hostname][varname] }}",
+        {%- endfor %}
         "safe": "installed"
       }'
       EOF
