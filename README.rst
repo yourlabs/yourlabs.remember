@@ -37,7 +37,7 @@ As such, ``your.child`` depends on ``your.parent``, and ``your.parent``
 depends on ``yourlabs.remember``.
 
 .. note:: bigsudo transparently ensures that requirements are installed
-          recursively, when you run ``bigsudo your.child``.
+          recursively when you run ``bigsudo your.child``.
 
 0. b) Conditional role inclusion
 ````````````````````````````````
