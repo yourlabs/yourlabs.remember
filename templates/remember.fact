@@ -1,7 +1,12 @@
 #!/bin/sh
-echo '{
-    {% for varname in varnames|default([]) -%}
-    "{{ varname }}": "{{ lookup("vars", varname) }}",
-    {% endfor -%}
-    "safe": "installed"
-}'
+cat <<EOF
+{
+{% for varname in varnames|default([]) -%}
+"{{ varname }}": "{{ lookup("vars", varname) }}",
+{% endfor -%}
+{% for key, value in (variables|default({})).items() -%}
+"{{ key }}": {{ value|to_nice_json }},
+{% endfor -%}
+"safe": "installed"
+}
+EOF
