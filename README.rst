@@ -81,7 +81,7 @@ executing ``your.parent`` has not left any trace of its execution.
 ``your.parent/tasks/main.yml``::
 
    - name: Register the execution of your.parent on the host persistent facts
-     include_role: name=yourlabs.remember
+     include_role: name=yourlabs.remember tasks_from=success
      vars:
        rolename: your.parent
 
@@ -110,7 +110,7 @@ At the end of ``your.parent/tasks/main.yml``, add the variable names to
 save it to a host fact::
 
    - name: Register the execution of your.parent on the host persistent facts
-     include_role: name=yourlabs.remember
+     include_role: name=yourlabs.remember tasks_from=success
      vars:
        rolename: your.parent
        varnames:
