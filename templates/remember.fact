@@ -1,12 +1,19 @@
 #!/bin/sh
 cat <<EOF
 {
+{% for varname in questions|default([]) -%}
+  {%- if varname in hostvars[inventory_hostname] %}
+"{{ varname }}": "{{ lookup("vars", varname).replace('"', '\\"') }}",
+  {% endif %}
+{% endfor -%}
 {% for varname in varnames|default([]) -%}
-"{{ varname }}": "{{ lookup("vars", varname) }}",
+  {%- if varname in hostvars[inventory_hostname] %}
+"{{ varname }}": "{{ lookup("vars", varname).replace('"', '\\"') }}",
+  {%- endif %}
 {% endfor -%}
 {% for key, value in (variables|default({})).items() -%}
 "{{ key }}": {{ value|to_nice_json }},
 {% endfor -%}
-"safe": "installed"
+"state": "{{ rolestate|default('inprogress') }}"
 }
 EOF

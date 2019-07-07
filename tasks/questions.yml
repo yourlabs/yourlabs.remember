@@ -1,0 +1,18 @@
+---
+
+- name: Initialiizing default variables
+  set_fact:
+    defaults: '{{ defaults|default({}) }}'
+    forceask: '{{ forceask|default(false) }}'
+
+- name: Setting facts from rolevars
+  set_fact: {'{{ rolevar.key }}': '{{ rolevar.value }}'}
+  with_dict: '{{ ansible_facts.ansible_local.get(rolename|as_fact_name, {}) }}'
+  loop_control:
+    loop_var: rolevar
+
+- name: Iterating over role variables for questions etc
+  include: question.yml
+  with_dict: '{{ questions }}'
+  loop_control:
+    loop_var: question

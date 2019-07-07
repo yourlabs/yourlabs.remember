@@ -7,6 +7,7 @@ This role provides the magic to smarten Ansible role workflows:
 
 - **massive speedup**: require a dependency role Once And Only Once
 - **inventoryless dry**: remember variables injected from the CLI on the host
+- **CLI variable prompt**: interactive questioning of the user for facts
 
 .. note:: This role does not automatically download dependency roles: that's
           the job of bigsudo command.
@@ -159,6 +160,57 @@ agent-less).
 I recommend trying this out for small projects (pizza team, handful of servers
 with different purpose).
 
+
+2. Interactive user prompt
+--------------------------
+
+You can also force the user to declare certain variables, here's an example
+from yourlabs.fqdn tasks:
+
+.. code:: yml
+
+  - include_role: name=yourlabs.remember tasks_from=questions
+    vars:
+      rolename: yourlabs.fqdn
+      questions:
+        fqdn: |
+          What is the host FQDN ?
+          A FQDN consists of a short host name and the DNS domain name.
+          If you choose www.foo.com, then the hostname will be www.
+          If you choose staging.foo.com, then the hostname will be staging.
+        other: some other variable ?
+      validation:
+        fqdn: '\w+\.[\w+.]+'
+      defaults:
+        other: my default value
+
+So, if you call ``bigsudo yourlabs.fqdn`` for the first time on a target host,
+it will prompt the user, unless they have passed a value through extra vars
+such as with ``bigsudo yourlabs.fqdn fqdn=foo.bar``.
+
+The prompt itself is pretty self-explanatory, it can look like::
+
+   [yourlabs.remember : Asking for role variable fqdn]
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+                          What is the host FQDN ?
+       A FQDN consists of a short host name and the DNS domain name.
+         If you choose www.foo.com, then the hostname will be www.
+     If you choose staging.foo.com, then the hostname will be staging.
+
+                         Currently: fqdn="lol.bar"
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   Your answer will be saved on the host in:
+   /etc/ansible/facts.d/yourlabs_fqdn.fact
+
+   We won't ask you again for localhost, but you can see this again using
+   forceask=fqdn or forceask=all or change it directly in the role's .fact file.
+
+   Enter two single quotes for blank value as such: ''
+   Press Enter (leave blank) to leave CURRENT value "lol.bar"
+   <CTRL+C> <A>    To abort play
+   Your input has to validate against: \w+\.[\w+.]+
+
 Conclusion
 ==========
 
@@ -169,6 +221,8 @@ Finnaly we're getting to the point where we have a clear and relatively easy way
   roles (such as docker, load balancers, lower level automation ...)
 - **suppress the inventory** because each server keeps its variables, it's also
   DRY by the way, so that's still one repo less you will have to worry about !
+- **interactive fact prompt** no more need to read the docs before executing a
+  role you found on internet as root !
 
 Credits
 =======

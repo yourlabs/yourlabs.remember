@@ -1,14 +1,3 @@
 ---
 
-# Task file to remember variables of a role for a
-# future execution without re-specifying variables.
-
-- name: Ensure facts directory exists
-  file: path=/etc/ansible/facts.d state=directory
-
-- name: Save facts for further runs
-  template:
-    src: remember.fact
-    dest: /etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact
-    mode: 0700
-    owner: root
+- include_tasks: save.yml

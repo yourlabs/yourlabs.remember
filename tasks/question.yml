@@ -1,0 +1,11 @@
+---
+
+- include: ask.yml
+  # If we don't have an answer, it means we didn't ask the user If the
+  # user wants to see questions and answers again, they will pass the
+  # forceask argument to something (i don't care what btw)
+  when: question.key not in hostvars[inventory_hostname] or forceask == question.key or forceask == 'all'
+
+- name: Saving value for {{ question.key }}={{ hostvars[inventory_hostname][question.key] }}
+  include_tasks: save.yml
+  when: question.key in hostvars[inventory_hostname]
