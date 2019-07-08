@@ -4,6 +4,7 @@
   set_fact:
     defaults: '{{ defaults|default({}) }}'
     forceask: '{{ forceask|default(false) }}'
+    validation: '{{ validation|default({}) }}'
 
 - name: Setting facts from rolevars
   set_fact: {'{{ rolevar.key }}': '{{ rolevar.value }}'}
