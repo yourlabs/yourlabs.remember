@@ -3,16 +3,8 @@ cat <<EOF
 {
 {% for varname in questions|default([]) -%}
   {%- if varname in hostvars[inventory_hostname] %}
-"{{ varname }}": "{{ lookup("vars", varname).replace('"', '\\"') }}",
+"{{ varname }}": {{ lookup("vars", varname)|to_nice_json }},
   {% endif %}
-{% endfor -%}
-{% for varname in varnames|default([]) -%}
-  {%- if varname in hostvars[inventory_hostname] %}
-"{{ varname }}": "{{ lookup("vars", varname).replace('"', '\\"') }}",
-  {%- endif %}
-{% endfor -%}
-{% for key, value in (variables|default({})).items() -%}
-"{{ key }}": {{ value|to_nice_json }},
 {% endfor -%}
 "state": "{{ rolestate|default('inprogress') }}"
 }
