@@ -7,7 +7,7 @@
 #  set_fact: "{{ as_fact_name }}='installed'"
 
 - name: Remember that the role was installed later on
-  include: remember.yml
+  include_tasks: success.yml
 
 - name: Do not wait for parent role handlers to execute ours
   meta: flush_handlers
