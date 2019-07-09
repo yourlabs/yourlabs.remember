@@ -17,3 +17,12 @@
   with_dict: '{{ questions }}'
   loop_control:
     loop_var: question
+  when: |
+    (
+      '_'.join(question.key.split('_')[:-1]) + '_enable' not in questions
+      or question.key.endswith('_enable')
+      or (
+        hostvars[inventory_hostname].get('_'.join(question.key.split('_')[:-1]) + '_enable')
+        and hostvars[inventory_hostname].get('_'.join(question.key.split('_')[:-1]) + '_enable')
+      )
+    )
