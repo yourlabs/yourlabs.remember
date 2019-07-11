@@ -1,10 +1,13 @@
 #!/bin/sh
 cat <<EOF
 {
-{% for varname in questions|default([]) -%}
-  {%- if varname in hostvars[inventory_hostname] %}
-"{{ varname }}": {{ lookup("vars", varname)|to_nice_json }},
+{% for rolevar in (rolevars|default([])) -%}
+  {%- if rolevar.name in hostvars[inventory_hostname] %}
+"{{ rolevar.name }}": {{ lookup("vars", rolevar.name)|to_nice_json }},
   {% endif %}
+{% endfor -%}
+{% for varname in varnames|default([]) -%}
+"{{ varname }}": {{ lookup("vars", varname)|to_nice_json }},
 {% endfor -%}
 "state": "{{ rolestate|default('inprogress') }}"
 }

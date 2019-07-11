@@ -1,5 +1,5 @@
 yourlabs.remember
-=================
+`````````````````
 
 Meta-Role for Ansible Automation Architects.
 
@@ -12,11 +12,29 @@ This role provides the magic to smarten Ansible role workflows:
 .. note:: This role does not automatically download dependency roles: that's
           the job of bigsudo command.
 
-0. Dependency injection
------------------------
+Demo
+====
 
-0. a) Recursive dependency resolution
-`````````````````````````````````````
+The easiest way to try it out::
+
+   pip install --user bigsudo
+   ~/.local/bin/bigsudo yourlabs.fqdn user@somehost
+
+Of course you could also use ``ansible`` commands, but then it would be more
+commands and options. We're getting inspiration from the *practice* of kubectl,
+for little servers, non-HA services, and pizza teams. Even if, I would
+personnaly still use ``bigsudo yourlabs.k8s`` to configure k8s instances if i
+had to ...
+
+Usage
+=====
+
+This role allows you to define what variables are needed in your own role,
+along with things such as the description that will be displayed to the user,
+defaults, regexp validation and so on.
+
+OAOO role dependency injection
+------------------------------
 
 I'll take the example of what happens with ``yourlabs.traefik`` (a docker based
 load balancer) that requires ``yourlabs.docker`` which in turn just installs
@@ -40,153 +58,61 @@ depends on ``yourlabs.remember``.
 .. note:: bigsudo transparently ensures that requirements are installed
           recursively when you run ``bigsudo your.child``.
 
-0. b) Conditional role inclusion
-````````````````````````````````
-
 Without the ``remember`` role, you would normally include the ``your.parent``
 role as such at the **top** of ``your.child/tasks/main.yml``::
 
    - name: Install your.parent prior to running our tasks
      include_role: name=your.parent
 
-However, if you don't want to wait for ``your.parent`` to fully execute
-everytime when you execute ``your.child``, you can transform the above task as
-such at the **top** of ``your.child/tasks/main.yml``::
+However, this will play the role everytime, making execution longer. If you
+don't want to wait for ``your.parent`` to fully execute everytime when you
+execute ``your.child``, you can transform the above task as such at the **top**
+of ``your.child/tasks/main.yml``::
 
    - name: Install your.parent if never done on this host
      include_role: name=yourlabs.remember tasks_from=require_once
      vars:
        rolename: your.parent
 
-As such, running ``bigsudo your.parent`` will create
+As such, running ``bigsudo your.parent`` (also works with ansible) will create
 ``/etc/ansible/facts.d/your_parent.fact`` with such content::
 
    #!/bin/sh
    echo '{
-      "state": "installed"
+      "state": "success"
    }'
 
-And when executing ``bigsudo your.child`` will call
-``yourlabs.remember/tasks/require_once.yml``, it will find ``"your_parent"`` in
-``ansible_facts.ansible_local``, and simply skip including ``your.parent``,
-making the execution of ``your.child`` much faster.
+This is how ``yourlabs.remember`` will skip including the role next time. Read
+on to add your custom persistent role variables with interactive configuration.
 
-0. c) Making a role conditionnaly installable
-`````````````````````````````````````````````
+Interactive role configuration
+------------------------------
 
-Given the above, what happens if you first run ``bigsudo your.parent`` and then
-``bigsudo your.child`` ? Well, ``your.parent`` will be executed twice, because
-executing ``your.parent`` has not left any trace of its execution.
+In ``your.parent/vars/main.yml``, define ``rolevars`` as such::
 
-**Unless**, you call the remember role at the **bottom** of
-``your.parent/tasks/main.yml``::
+  ---
+  rolevars:
+    - name: domain_enable
+      question: Enable a custom domain ?
+      default: false
+      regexp: 'true|false'
+    - name: domain
+      question: What domain do you want to setup ?
+      regexp: '\w+\.[\w+.]+'
+      default: '{{ inventory_hostname }}'
 
-   - name: Register the execution of your.parent on the host persistent facts
-     include_role: name=yourlabs.remember tasks_from=success
-     vars:
-       rolename: your.parent
+  # the when for variables must be set in global variables to leverage lazy
+  # initialization
+  domain_when: '{{ domain_enable }}'
 
-As such, even executing ``your.parent`` outside of
-``include_role: name=yourlabs.remember tasks_from=require_once`` will leave a
-trace that ``yourlabs.remember`` will be able to pickup.
+  # required to namespace the persistent fact properly
+  rolename: your.parent
 
-That's all for that ... but wait ! There's more following ;)
+Then, in ``your.parent/tasks/main.yml``, you can include
+``yourlabs.remember`` and it will load up the variables and ask user for new
+variables interactively::
 
-1. Inventory-less pattern
--------------------------
-
-After a lot of discussion with some colleagues, in a mission where each of us
-has a little project for a pizza team and a handful of servers, that having an
-inventory was an un-necessary burden. For small projects like ours (but we have
-many), we end up vaulting the handful of variables that differ from an
-environment to another with a single passphrase that we then store in the CI
-environment. We decided to try cutting that middleman, and just store an env
-file in CI variables for each environment. It turned out this did the job just
-as fine but will less effort.
-
-1. a) Storing inventory variables on the host
-`````````````````````````````````````````````
-
-At the end of ``your.parent/tasks/main.yml``, add the variable names to
-save it to a host fact::
-
-   - name: Register the execution of your.parent on the host persistent facts
-     include_role: name=yourlabs.remember tasks_from=success
-     vars:
-       rolename: your.parent
-       varnames:
-       - url
-
-As such, running ``bigsudo your.parent url=http://foo`` will create
-``/etc/ansible/facts.d/your_parent.fact`` with such content::
-
-   #!/bin/sh
-   echo '{
-      "url": "http://foo",
-      "state": "installed"
-   }'
-
-This will still register your role as installed in a host fact, but also with
-the ``url`` variable.
-
-1. b) Remembering variables from host facts
-```````````````````````````````````````````
-
-Thanks to the fact that was created, you will be able to run
-``bigsudo your.parent`` from now on without having to re-specify the ``url``
-variable, **if** you have defined ``your.parent/vars/main.yml`` as such for
-example::
-
-   ---
-   # note that dots are not acceptable in facts names last time i checked, so
-   # we convert dots to underscores:
-   url: '{{ ansible_facts.ansible_local.your_parent.url|default("example.com") }}'
-
-In this position:
-
-- You can still change ``url`` from the command line because command line extra
-  variables have predecence over definitions.
-- When not set in the command line, it will try to find it in the facts, and
-  recover its state from last time the variable was set.
-- Finnaly, if no CLI nor fact variable was found, it will set a default of
-  ``"example.com"``.
-
-From now on, you will only have to specify variables when you want to change
-them, you don't need to store them in an inventory if you use this pattern.
-Also note that you can still use ``yourlabs.remember`` with an inventory,
-without variable in host facts (which look like SaltStack grains, except still
-agent-less).
-
-I recommend trying this out for small projects (pizza team, handful of servers
-with different purpose).
-
-
-2. Interactive user prompt
---------------------------
-
-You can also force the user to declare certain variables, here's an example
-from yourlabs.fqdn tasks:
-
-.. code:: yml
-
-  - include_role: name=yourlabs.remember tasks_from=questions
-    vars:
-      rolename: yourlabs.fqdn
-      questions:
-        fqdn: |
-          What is the host FQDN ?
-          A FQDN consists of a short host name and the DNS domain name.
-          If you choose www.foo.com, then the hostname will be www.
-          If you choose staging.foo.com, then the hostname will be staging.
-        other: some other variable ?
-      validation:
-        fqdn: '\w+\.[\w+.]+'
-      defaults:
-        other: my default value
-
-So, if you call ``bigsudo yourlabs.fqdn`` for the first time on a target host,
-it will prompt the user, unless they have passed a value through extra vars
-such as with ``bigsudo yourlabs.fqdn fqdn=foo.bar``.
+   - include_role: name=yourlabs.remember
 
 The prompt itself is pretty self-explanatory, it can look like::
 
@@ -230,7 +156,10 @@ Credits
 Thanks *totakoko* from ``beta.gouv.fr`` for the long discussions and for
 demonstrating that my inventory was overkill and that it was possible without ;)
 
-Thanks *agaffney* and *mackerman* from ``#ansible``@``irc.freenode.net``, on
-of the best IRC channels !
+Thanks to ``#ansible``@``irc.freenode.net``, on of the best IRC channels, namely:
+
+- agaffney
+- mackerman
+- jborean93
 
 And thank *you* for reading my little adventure !

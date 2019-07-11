@@ -1,55 +1,55 @@
 ---
 
-- name: Asking for role variable {{ question.key }}
+- name: Asking for role variable {{ rolevar.name }}
   pause:
     prompt: |
       {{ '~'|horizontalize }}
 
-      {{ question.value|center }}
+      {{ rolevar.question }}
 
-      {% if question.key in hostvars[inventory_hostname] %}
-      {{ ('Currently: ' + question.key + '="' + hostvars[inventory_hostname][question.key] + '"')|center }}
+      {% if rolevar.name in hostvars[inventory_hostname] %}
+      {{ ('Currently: ' + rolevar.name + '="' + hostvars[inventory_hostname][rolevar.name] + '"') }}
       {% endif -%}
 
       {{ '~'|horizontalize }}
-      {% if question.key in defaults %}
-      default='{{ defaults[question.key] }}'
+      {% if rolevar.default|default(false) %}
+      default='{{ rolevar.default }}'
       {% endif -%}
 
       Your answer will be saved on the host in:
       /etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact
 
       We won't ask you again for {{ inventory_hostname }}, but you can see this again using
-      forceask={{ question.key }} or forceask=all or change it directly in the role's .fact file.
+      forceask={{ rolevar.name }} or forceask=all or change it directly in the role's .fact file.
 
       Enter two single quotes for blank value as such: ''
-      {% if question.key in hostvars[inventory_hostname] %}
-      Press Enter (leave blank) to leave CURRENT value "{{ hostvars[inventory_hostname][question.key] }}"
-      {% elif question.key in defaults %}
-      Press Enter (leave blank) to leave default value "{{ defaults[question.key] }}"
+      {% if rolevar.name in hostvars[inventory_hostname] %}
+      Press Enter (leave blank) to leave CURRENT value "{{ hostvars[inventory_hostname][rolevar.name] }}"
+      {% elif rolevar.default|default(false) %}
+      Press Enter (leave blank) to leave default value "{{ rolevar.default }}"
       {% endif -%}
       <CTRL+C> <A>    To abort play
-      {% if question.key in validation %}
-      Your input has to validate against: {{ validation[question.key] }}
+      {% if rolevar.regexp %}
+      Your input has to validate against: {{ rolevar.regexp }}
       {%- endif %}
   register: prompt
   until: |
     (
       prompt.user_input
-      and prompt.user_input|validate(validation.get(question.key))
+      and prompt.user_input|validate(rolevar.regexp|default(''))
     )
-    or question.key in defaults
-    or question.key in hostvars[inventory_hostname]
+    or 'default' in rolevar
+    or rolevar.name in hostvars[inventory_hostname]
   delay: 0.00001
   retries: 20
 
-- name: Setting {{ question.key }}={{ prompt.user_input }}
-  set_fact: {'{{ question.key }}': "{% if prompt.user_input != \"''\" %}{{ prompt.user_input }}{% endif %}"}
+- name: Setting {{ rolevar.name }}={{ prompt.user_input }}
+  set_fact: {'{{ rolevar.name }}': "{% if prompt.user_input != \"''\" %}{{ prompt.user_input }}{% endif %}"}
   when: prompt.user_input
 
-- name: Setting {{ question.key }}={{ defaults[question.key] }}
-  set_fact: {'{{ question.key }}': '{{ defaults[question.key] }}'}
-  when: question.key in defaults and not prompt.user_input
+- name: Setting {{ rolevarn.name }}={{ rolevar.default }}
+  set_fact: {'{{ rolevarn.name }}': '{{ rolevar.default }}'}
+  when: "'default' in rolevar and not prompt.user_input"
 
 - name: Saving variables
   include_tasks: save.yml

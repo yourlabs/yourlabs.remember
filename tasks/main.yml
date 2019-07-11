@@ -1,3 +1,29 @@
 ---
 
-- include_tasks: save.yml
+- name: Setting existing variables from role fact
+  set_fact: {'{{ rolevar.key }}': '{{ rolevar.value }}'}
+  with_dict: '{{ ansible_facts.ansible_local.get(rolename|as_fact_name, {}) }}'
+  loop_control:
+    loop_var: rolevar
+
+- debug: var=rolevar
+  loop: '{{ rolevars }}'
+  loop_control:
+    loop_var: rolevar
+
+- name: Iterating over role variables for questions etc
+  include_tasks: ask.yml
+  loop: '{{ rolevars }}'
+  loop_control:
+    loop_var: rolevar
+  when: |
+    (
+        rolevar.name not in hostvars[inventory_hostname]
+        or forceask == rolevar.name
+        or forceask == 'all'
+    )
+    and
+    (
+        rolevar.name + '_when' not in hostvars[inventory_hostname]
+        or hostvars[inventory_hostname][rolevar.name + '_when']|bool
+    )
