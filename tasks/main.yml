@@ -5,25 +5,15 @@
   with_dict: '{{ ansible_facts.ansible_local.get(rolename|as_fact_name, {}) }}'
   loop_control:
     loop_var: rolevar
-
-- debug: var=rolevar
-  loop: '{{ rolevars }}'
-  loop_control:
-    loop_var: rolevar
+  # let command line and inventory take predecence
+  when: rolevar.key not in hostvars[inventory_hostname]
 
 - name: Iterating over role variables for questions etc
-  include_tasks: ask.yml
+  include_tasks: ask_when.yml
   loop: '{{ rolevars }}'
   loop_control:
     loop_var: rolevar
   when: |
-    (
-        rolevar.name not in hostvars[inventory_hostname]
-        or forceask == rolevar.name
-        or forceask == 'all'
-    )
-    and
-    (
-        rolevar.name + '_when' not in hostvars[inventory_hostname]
-        or hostvars[inventory_hostname][rolevar.name + '_when']|bool
-    )
+    rolevar.name not in hostvars[inventory_hostname]
+    or forceask == rolevar.name
+    or forceask == 'all'
