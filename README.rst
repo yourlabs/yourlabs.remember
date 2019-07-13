@@ -92,14 +92,14 @@ In ``your.parent/vars/main.yml``, define ``rolevars`` as such::
 
   ---
   rolevars:
-    - name: domain_enable
-      question: Enable a custom domain ?
-      default: false
-      regexp: 'true|false'
-    - name: domain
-      question: What domain do you want to setup ?
-      regexp: '\w+\.[\w+.]+'
-      default: '{{ inventory_hostname }}'
+  - name: domain_enable
+    question: Enable a custom domain ?
+    default: false
+    regexp: 'true|false'
+  - name: domain
+    question: What domain do you want to setup ?
+    regexp: '\w+\.[\w+.]+'
+    default: '{{ inventory_hostname }}'
 
   # the when for variables must be set in global variables to leverage lazy
   # initialization
