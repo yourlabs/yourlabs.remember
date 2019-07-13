@@ -28,8 +28,14 @@
       {% elif rolevar.default|default(false) %}
       Press Enter (leave blank) to leave default value "{{ rolevar.default }}"
       {% endif -%}
+      {% if 'choices' in rolevar %}
+      Choices:
+      {% for key, value in rolevar.choices.items() %}
+      - {{ key }}: {{ value }}
+      {% endfor %}
+      {% endif %}
       <CTRL+C> <A>    To abort play
-      {% if rolevar.regexp %}
+      {% if 'regexp' in rolevar %}
       Your input has to validate against: {{ rolevar.regexp }}
       {%- endif %}
   register: prompt
@@ -43,12 +49,16 @@
   delay: 0.00001
   retries: 20
 
+- name: Setting choice
+  set_fact: {'{{ rolevar.name }}': "{{ rolevar.choices[prompt.user_input]}}"}
+  when: prompt.user_input and prompt.user_input in rolevar.get('choices', {})
+
 - name: Setting {{ rolevar.name }}={{ prompt.user_input }}
   set_fact: {'{{ rolevar.name }}': "{% if prompt.user_input != \"''\" %}{{ prompt.user_input }}{% endif %}"}
-  when: prompt.user_input
+  when: prompt.user_input and ('choices' not in rolevar or prompt.user_input not in rolevar.choices)
 
-- name: Setting {{ rolevarn.name }}={{ rolevar.default }}
-  set_fact: {'{{ rolevarn.name }}': '{{ rolevar.default }}'}
+- name: Setting {{ rolevar.name }}={{ rolevar.default }}
+  set_fact: {'{{ rolevar.name }}': '{{ rolevar.default }}'}
   when: "'default' in rolevar and not prompt.user_input"
 
 - name: Saving variables
