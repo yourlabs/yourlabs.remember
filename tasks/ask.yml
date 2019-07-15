@@ -16,8 +16,7 @@
       default='{{ rolevar.default }}'
       {% endif -%}
 
-      Your answer will be saved on the host in:
-      /etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact
+      Your answer will be saved on the host (path to be annouced).
 
       We won't ask you again for {{ inventory_hostname }}, but you can see this again using
       forceask={{ rolevar.name }} or forceask=all or change it directly in the role's .fact file.
@@ -60,6 +59,3 @@
 - name: Setting {{ rolevar.name }}={{ rolevar.default }}
   set_fact: {'{{ rolevar.name }}': '{{ rolevar.default }}'}
   when: "'default' in rolevar and not prompt.user_input"
-
-- name: Saving variables
-  include_tasks: save.yml

@@ -9,6 +9,6 @@
 - name: Save facts for further runs
   template:
     src: remember.fact
-    dest: /etc/ansible/facts.d/{{ rolename|as_fact_name }}.fact
+    dest: /etc/ansible/facts.d/{{ factname }}.fact
     mode: 0755
     owner: root

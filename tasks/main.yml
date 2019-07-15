@@ -2,7 +2,7 @@
 
 - name: Setting existing variables from role fact
   set_fact: {'{{ rolevar.key }}': '{{ rolevar.value }}'}
-  with_dict: '{{ ansible_facts.ansible_local.get(rolename|as_fact_name, {}) }}'
+  with_dict: '{{ ansible_facts.ansible_local.get(factname, {}) }}'
   loop_control:
     loop_var: rolevar
   # let command line and inventory take predecence
@@ -17,3 +17,6 @@
     rolevar.name not in hostvars[inventory_hostname]
     or forceask == rolevar.name
     or forceask == 'all'
+
+- name: Saving variables
+  include_tasks: save.yml
