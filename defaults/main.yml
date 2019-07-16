@@ -1,0 +1,4 @@
+---
+forceask: false
+rolevars: []
+factname: '{{ rolename|as_fact_name }}'
