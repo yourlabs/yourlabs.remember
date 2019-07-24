@@ -10,7 +10,8 @@ This role provides the magic to smarten Ansible role workflows:
 - **CLI variable prompt**: interactive questioning of the user for facts
 
 .. note:: This role does not automatically download dependency roles: that's
-          the job of bigsudo command.
+          the job of `bigsudo
+          <https://pypi.org/project/bigsudo/>`_ command.
 
 Demo
 ====
@@ -19,6 +20,8 @@ The easiest way to try it out::
 
    pip install --user bigsudo
    ~/.local/bin/bigsudo yourlabs.fqdn user@somehost
+   # Or if you feel brave (skip hostname to apply on localhost)
+   ~/.local/bin/bigsudo yourlabs.traefik
 
 Of course you could also use ``ansible`` commands, but then it would be more
 commands and options. We're getting inspiration from the *practice* of kubectl,
@@ -67,12 +70,23 @@ role as such at the **top** of ``your.child/tasks/main.yml``::
 However, this will play the role everytime, making execution longer. If you
 don't want to wait for ``your.parent`` to fully execute everytime when you
 execute ``your.child``, you can transform the above task as such at the **top**
-of ``your.child/tasks/main.yml``::
+of ``your.child/tasks/main.yml``:
+
+.. code-block:: yaml
 
    - name: Install your.parent if never done on this host
-     include_role: name=yourlabs.remember tasks_from=require_once
-     vars:
-       rolename: your.parent
+     include_role: name=your.parent
+     when: ansible_facts['ansible_local']['your_parent']['state']|default('') != 'success'
+
+For this to work, you will need to add the following at the end of
+``your.parent/tasks/main.yml``:
+
+.. code-block:: yaml
+
+  - include_role: name=yourlabs.remember
+    vars:
+      remember_extra: {state: success}
+      remember_fact: your_parent
 
 As such, running ``bigsudo your.parent`` (also works with ansible) will create
 ``/etc/ansible/facts.d/your_parent.fact`` with such content::
@@ -82,60 +96,79 @@ As such, running ``bigsudo your.parent`` (also works with ansible) will create
       "state": "success"
    }'
 
-This is how ``yourlabs.remember`` will skip including the role next time. Read
-on to add your custom persistent role variables with interactive configuration.
+This is how you can skip including the role next time.
+
+Read on to add your custom persistent role variables with interactive
+configuration.
 
 Interactive role configuration
 ------------------------------
 
-In ``your.parent/vars/main.yml``, define ``rolevars`` as such::
+In ``your.parent/vars/main.yml``, define ``remember_fact`` that is the
+namespaces for this role deployment variable as well as the variables your role
+depends on as such::
 
   ---
-  rolevars:
-  - name: domain_enable
-    question: Enable a custom domain ?
+  remember_fact: your_parent
+  remember:
+  - name: email_enable
+    question: Enable a custom email ?
     default: false
-    regexp: 'true|false'
-  - name: domain
-    question: What domain do you want to setup ?
-    regexp: '\w+\.[\w+.]+'
-    default: '{{ inventory_hostname }}'
+    type: bool
+  - name: email
+    question: What email to use ?
+    type: email
+    default: '{{ lookup("env", "USER") }}@{{ inventory_hostname }}'
+    when: email_enable
 
-  # the when for variables must be set in global variables to leverage lazy
-  # initialization
-  domain_when: '{{ domain_enable }}'
-
-  # required to namespace the persistent fact properly
-  rolename: your.parent
-
-Then, in ``your.parent/tasks/main.yml``, you can include
-``yourlabs.remember`` and it will load up the variables and ask user for new
-variables interactively::
+Then, in ``your.parent/tasks/main.yml``, you can include ``yourlabs.remember``
+and it will load up the variables and ask user for new variables
+interactively, pretty fast thanks to the Action Plugin::
 
    - include_role: name=yourlabs.remember
 
-The prompt itself is pretty self-explanatory, it can look like::
+You can do more, refer to the ``test.yml`` playbook of course, which i run with
+``ansible-playbook -c local -i localhost, test.yml -v --become``:
 
-   [yourlabs.remember : Asking for role variable fqdn]
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. include:: test.yml
 
-                          What is the host FQDN ?
-       A FQDN consists of a short host name and the DNS domain name.
-         If you choose www.foo.com, then the hostname will be www.
-     If you choose staging.foo.com, then the hostname will be staging.
+Multiple deployments: namespacing variables
+-------------------------------------------
 
-                         Currently: fqdn="lol.bar"
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   Your answer will be saved on the host in:
-   /etc/ansible/facts.d/yourlabs_fqdn.fact
+To enable multiple deployments of a role on the same host, ie. to enable
+**eXtreme DevOps** you will need your ``remember_fact`` to depend on a variable.
 
-   We won't ask you again for localhost, but you can see this again using
-   forceask=fqdn or forceask=all or change it directly in the role's .fact file.
+For example, you want to deploy a docker-compose into different directories on
+your host. As such, you will require a ``home`` variable:
 
-   Enter two single quotes for blank value as such: ''
-   Press Enter (leave blank) to leave CURRENT value "lol.bar"
-   <CTRL+C> <A>    To abort play
-   Your input has to validate against: \w+\.[\w+.]+
+.. code-block:: yaml
+
+    remember:
+    - name: home
+      question: What home dir to deploy to ? (must start with /home for the regexp example)
+      default: /home/test
+      type: path
+      regexp: /home.*
+
+That means that if the user doesn't pass an ``home`` variable on the command
+line (ie. with ``-e home=/home/bar``) it will prompt for the home directory.
+Now, all we have to do is re-use that home variable into the ``remember_fact``
+so that it will namespace variables per home directory:
+
+.. code-black:: yaml
+
+    remember_fact: your_role_j2((home))
+
+As you can see, we use ``j2(( ))`` instead of ``{{ }}``, this is to prevent
+Ansible from rendering this before getting a value for the home variable. In
+fact, the remember action plugin will:
+
+- try to render ``remember_fact`` to load existing variables if any,
+- catch ``AnsibleUndefinedVariable`` exceptions,
+- find the definitions for the undefined variables it needs in ``remember``,
+- ask for them without saving
+- load the existing variables
+- and ask for any new variables
 
 Conclusion
 ==========

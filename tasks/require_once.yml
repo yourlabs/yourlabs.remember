@@ -1,5 +1,0 @@
----
-
-- name: Include dependency role if it was never played on this host
-  include: install.yml
-  when: ansible_facts.ansible_local.get(factname, {}).get('rolestate', '') == 'success'

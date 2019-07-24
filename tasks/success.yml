@@ -1,4 +1,0 @@
----
-- include: main.yml
-  vars:
-    rolestate: success

@@ -1,0 +1,57 @@
+---
+
+- hosts: '*'
+  roles:
+  tasks:
+  - name: Demonstrate how to include a role OAOO
+    include_role: name={{ role|default("yourlabs.fqdn") }}
+    when: ansible_facts['ansible_local']['yourlabs_fqdn']['state']|default('') != 'success'
+
+- hosts: '*'
+  vars:
+    remember_fact: test_remember  # variables namespace
+    remember:
+    - name: yourchoice
+      question: Choose something
+      default: staging
+      choices:
+        staging: https://acme-staging.api.letsencrypt.org/directory
+        production: https://acme-v01.api.letsencrypt.org/directory
+        httponly: ''
+    - name: email_enable
+      question: Enable a custom email ?
+      default: false
+      type: bool
+    - name: email
+      question: What email to use ?
+      type: email
+      default: '{{ lookup("env", "USER") }}@{{ inventory_hostname }}'
+      when: email_enable
+
+  tasks:
+  - name: Demonstrate mono-instance role deployment (role can apply once per host)
+    include_role:
+      name: '{{ lookup("env", "PWD") }}'
+  - debug: var=yourchoice
+  - debug: var=email_enable
+  - debug: var=email
+
+- hosts: '*'
+  vars:
+    remember_fact: test_remember_j2((home))
+    remember:
+    - name: home
+      question: What home dir to deploy to ? (must start with /home for the regexp example)
+      default: /home/test
+      type: path
+      regexp: /home.*
+    - name: instance
+      question: What name for this deployment in j2((home)) ?
+      default: j2(( home.split('/')[-1] ))
+
+  tasks:
+  - name: Demonstrate multi-instance role deployment (role can apply once per host)
+    include_role:
+      name: '{{ lookup("env", "PWD") }}'
+  - debug: var=home
+  - debug: var=instance

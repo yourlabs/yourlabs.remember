@@ -1,4 +1,0 @@
----
-
-- include_tasks: ask.yml
-  when: lookup('vars', rolevar.name + '_when', default=true)
