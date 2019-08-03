@@ -148,6 +148,10 @@ class ActionModule(ActionBase):
 
         for key, value in self._task.args.get('extra', {}).items():
             self.facts[key] = value
+
+        if 'state' in self._task.args:
+            self.facts['state'] = self._task.args['state']
+
         self.save()
 
         result['changed'] = False

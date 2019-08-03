@@ -1,0 +1,6 @@
+---
+
+- name: Seting variables for this role
+  remember:
+    extra: '{{ remember_extra|default({}) }}'
+    state: success

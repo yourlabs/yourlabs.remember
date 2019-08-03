@@ -83,10 +83,7 @@ For this to work, you will need to add the following at the end of
 
 .. code-block:: yaml
 
-  - include_role: name=yourlabs.remember
-    vars:
-      remember_extra: {state: success}
-      remember_fact: your_parent
+  - include_role: name=yourlabs.remember tasks_from=success
 
 As such, running ``bigsudo your.parent`` (also works with ansible) will create
 ``/etc/ansible/facts.d/your_parent.fact`` with such content::
