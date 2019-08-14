@@ -1,4 +1,4 @@
 ---
-forceask: false
+forceask: ''
 rolevars: []
 factname: '{{ rolename|as_fact_name }}'

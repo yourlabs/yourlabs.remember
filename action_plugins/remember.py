@@ -118,7 +118,7 @@ class ActionModule(ActionBase):
     def _run(self, result):
         self.fact_name = None  # let get_fact_name dependencies use fact_name
         self.ansible_local = self.task_vars['ansible_facts']['ansible_local']
-        self.facts = {}
+        self.facts = dict()
         self.fact_name = self.get_fact_name()
         rolevars = self.ansible_local.get(self.fact_name, {})
         self.facts.update(rolevars)
@@ -133,13 +133,14 @@ class ActionModule(ActionBase):
                     continue
 
             force = False
-            forceask = self.task_vars.get('forceask', [])
-            if isinstance(forceask, list):
-                force = var['name'] in forceask
-            else:
-                force = forceask == var['name'] or forceask in ('*', 'all')
-
-            if force or var['name'] not in self.task_vars:
+            forceask = self.task_vars.get('forceask', '').split(',')
+            force = var['name'] in forceask or forceask in ('*', 'all')
+            if (
+                'state' in self.task_vars.get('remember_extra', {})
+                and self.task_vars['remember_extra']['state'] == 'success'
+            ):
+                force = False
+            elif force or var['name'] not in self.task_vars:
                 self.ask(var['name'])
             else:
                 self.facts[var['name']] = self.task_vars[var['name']]
