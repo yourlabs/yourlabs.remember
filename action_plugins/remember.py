@@ -117,10 +117,21 @@ class ActionModule(ActionBase):
 
     def _run(self, result):
         self.fact_name = None  # let get_fact_name dependencies use fact_name
-        self.ansible_local = self.task_vars['ansible_facts']['ansible_local']
+        result = self._execute_module(
+            module_name='setup',
+            module_args=dict(
+                gather_subset=[
+                    '!all',
+                    '!any',
+                    'facter',
+                ]
+            ),
+            task_vars=self.task_vars
+        )
+        self.ansible_local = result['ansible_facts']['ansible_local']
         self.facts = dict()
         self.fact_name = self.get_fact_name()
-        rolevars = self.ansible_local.get(self.fact_name, {})
+        rolevars = self.ansible_local[self.fact_name]
         self.facts.update(rolevars)
         self.task_vars.update(rolevars)
 
