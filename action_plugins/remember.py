@@ -131,7 +131,7 @@ class ActionModule(ActionBase):
         self.ansible_local = result['ansible_facts']['ansible_local']
         self.facts = dict()
         self.fact_name = self.get_fact_name()
-        rolevars = self.ansible_local[self.fact_name]
+        rolevars = self.ansible_local.get(self.fact_name, {})
         self.facts.update(rolevars)
         self.task_vars.update(rolevars)
 
